@@ -15,30 +15,27 @@
 (fact "vector difference"
   (vec- [4 6 3] [2 9 1]) => [2 -3 2])
 
-(defn intersect [ray sphere]
-  (let [{:keys [center radius]} sphere
-        {:keys [origin direction]} ray
-        origin (vec- origin center)
-        A (vecdot direction direction)
-        B (* 2 (vecdot direction origin))
-        C (- (vecdot origin origin) (* radius radius))
-        x (- (* B B) (* 4 A C))]
-    (when (>= x 0)
-      (first
-       (filter
-        (partial < 0) [(/ (+ B (Math/sqrt x)) (* -2 A))
-                       (/ (- B (Math/sqrt x)) (* -2 A))])))))
+(defn sphere [center radius]
+  (fn [origin direction]
+    (let [origin (vec- origin center)
+          A (vecdot direction direction)
+          B (* 2 (vecdot direction origin))
+          C (- (vecdot origin origin) (* radius radius))
+          x (- (* B B) (* 4 A C))]
+      (when (>= x 0)
+        (first
+         (filter
+          (partial < 0) [(/ (+ B (Math/sqrt x)) (* -2 A))
+                         (/ (- B (Math/sqrt x)) (* -2 A))]))))))
 
 (fact "ray doesn't hit sphere"
-  (intersect {:origin [0 0 0] :direction [1 0 0]}
-             {:center [0 2 0] :radius 1}) => nil)
+  ((sphere [0 2 0] 1) [0 0 0] [1 0 0]) => nil)
 
 (fact "ray hits sphere head on"
-  (intersect {:origin [0 0 0] :direction [0 1 0]}
-             {:center [0 2 0] :radius 1}) => (roughly 1))
+  ((sphere [0 2 0] 1) [0 0 0] [0 1 0]) => (roughly 1))
+
 (fact "ray grazes sphere"
-  (intersect {:origin [0 0 0] :direction [0 1 0]}
-             {:center [0 2 1] :radius 1}) => (roughly 2))
+  ((sphere [0 2 1] 1) [0 0 0] [0 1 0]) => (roughly 2))
+
 (fact "ray hits sphere from inside"
-  (intersect {:origin [0 0 0] :direction [0 1 0]}
-             {:center [0 0 0] :radius 1}) => (roughly 1))
+  ((sphere [0 0 0] 1) [0 0 0] [0 1 0]) => (roughly 1))
