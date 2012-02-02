@@ -90,7 +90,7 @@
     (count (camera-rays)) => (* 320 240)))
 
 (defn sphere [center radius]
-  (fn [origin direction]
+  (fn [[origin direction]]
     (let [origin (vec- origin center)
           A (vecdot direction direction)
           B (* 2 (vecdot direction origin))
@@ -103,16 +103,16 @@
                          (/ (- B (Math/sqrt x)) (* -2 A))]))))))
 
 (fact "ray doesn't hit sphere"
-  ((sphere [0 2 0] 1) [0 0 0] [1 0 0]) => nil)
+  ((sphere [0 2 0] 1) [[0 0 0] [1 0 0]]) => nil)
 
 (fact "ray hits sphere head on"
-  ((sphere [0 2 0] 1) [0 0 0] [0 1 0]) => (roughly 1))
+  ((sphere [0 2 0] 1) [[0 0 0] [0 1 0]]) => (roughly 1))
 
 (fact "ray grazes sphere"
-  ((sphere [0 2 1] 1) [0 0 0] [0 1 0]) => (roughly 2))
+  ((sphere [0 2 1] 1) [[0 0 0] [0 1 0]]) => (roughly 2))
 
 (fact "ray hits sphere from inside"
-  ((sphere [0 0 0] 1) [0 0 0] [0 1 0]) => (roughly 1))
+  ((sphere [0 0 0] 1) [[0 0 0] [0 1 0]]) => (roughly 1))
 
 (defn scene []
   (fn [ray] black))
