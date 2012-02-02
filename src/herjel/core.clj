@@ -1,5 +1,8 @@
 (ns herjel.core
-  (:use midje.sweet))
+  (:import [java.awt.image BufferedImage]
+           [javax.imageio ImageIO])
+  (:use [clojure.java.io :only [file]]
+        midje.sweet))
 
 (defn roughlies [expected]
   (fn [actual]
@@ -127,3 +130,19 @@
   (render (scene)) => [black]
   (provided
     (camera-rays) => [[[0 0 0] [1 0 0]]]))
+
+(defn rgb-to-int [rgb]
+  (reduce +
+          (map bit-shift-left
+               (map #(int (* 255 %)) rgb)
+               [16 8 0])))
+
+(fact
+  (rgb-to-int [0 0 0]) => 0
+  (rgb-to-int [1 1 1]) => (dec (* 256 256 256)))
+
+(defn write-image [type filename width height pixels]
+  (let [image (BufferedImage. width height BufferedImage/TYPE_INT_RGB)
+        ints (into-array Integer/TYPE (map rgb-to-int pixels))]
+    (.setRGB image 0 0 width height ints 0 width)
+    (ImageIO/write image type (file (str filename "." type)))))
