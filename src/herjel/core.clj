@@ -9,8 +9,8 @@
 (def white [1 1 1])
 
 (def camera-defaults
-  {:origin [0 0 0]
-   :viewport [[-2 1.5 2] [2 1.5 2] [2 -1.5 2]]
+  {:origin (->Vector3 0 0 0)
+   :viewport [(->Vector3 -2 1.5 2) (->Vector3 2 1.5 2) (->Vector3 2 -1.5 2)]
    :x-resolution 320})
 
 (defn camera-rays
@@ -22,24 +22,24 @@
            height (vec- lower-right upper-right)
            ratio (/ (veclen width) (veclen height))
            y-resolution (int (/ x-resolution ratio))
-           dx (scale (/ x-resolution) width)
-           dy (scale (/ y-resolution) height)
-           start (vec+ upper-left (scale 0.5 dx) (scale 0.5 dy))]
+           dx (scale width (/ x-resolution))
+           dy (scale height (/ y-resolution))
+           start (vec+ upper-left (vec+ (scale dx 0.5) (scale dy 0.5)))]
        (for [y (range y-resolution)
              x (range x-resolution)]
-         [origin (norm (vec+ start (scale x dx) (scale y dy)))]))))
+         [origin (norm (vec+ start (vec+ (scale dx x) (scale dy y))))]))))
 
 (fact "camera ray tests"
-  (let [options {:origin [0 0 0]
-                 :viewport [[-1 1 1] [1 1 1] [1 -1 1]]}
+  (let [options {:origin (->Vector3 0 0 0)
+                 :viewport [(->Vector3 -1 1 1) (->Vector3 1 1 1) (->Vector3 1 -1 1)]}
         a (/ 0.5 (Math/sqrt 1.5))
         b (/ -0.5 (Math/sqrt 1.5))
         c (/ 1 (Math/sqrt 1.5))]
-    (camera-rays (assoc options :x-resolution 1)) => [[[0 0 0] [0.0 0.0 1.0]]]
-    (camera-rays (assoc options :x-resolution 2)) => [[[0 0 0] [b a c]]
-                                                      [[0 0 0] [a a c]]
-                                                      [[0 0 0] [b b c]]
-                                                      [[0 0 0] [a b c]]]
+    (camera-rays (assoc options :x-resolution 1)) => [[(->Vector3 0 0 0) (->Vector3 0.0 0.0 1.0)]]
+    (camera-rays (assoc options :x-resolution 2)) => [[(->Vector3 0 0 0) (->Vector3 b a c)]
+                                                      [(->Vector3 0 0 0) (->Vector3 a a c)]
+                                                      [(->Vector3 0 0 0) (->Vector3 b b c)]
+                                                      [(->Vector3 0 0 0) (->Vector3 a b c)]]
     (count (camera-rays)) => (* 320 240)))
 
 (defn sphere [center radius]
@@ -56,16 +56,16 @@
                          (/ (- B (Math/sqrt x)) (* -2 A))]))))))
 
 (fact "ray doesn't hit sphere"
-  ((sphere [0 2 0] 1) [[0 0 0] [1 0 0]]) => nil)
+  ((sphere (->Vector3 0 2 0) 1) [(->Vector3 0 0 0) (->Vector3 1 0 0)]) => nil)
 
 (fact "ray hits sphere head on"
-  ((sphere [0 2 0] 1) [[0 0 0] [0 1 0]]) => (roughly 1))
+  ((sphere (->Vector3 0 2 0) 1) [(->Vector3 0 0 0) (->Vector3 0 1 0)]) => (roughly 1))
 
 (fact "ray grazes sphere"
-  ((sphere [0 2 1] 1) [[0 0 0] [0 1 0]]) => (roughly 2))
+  ((sphere (->Vector3 0 2 1) 1) [(->Vector3 0 0 0) (->Vector3 0 1 0)]) => (roughly 2))
 
 (fact "ray hits sphere from inside"
-  ((sphere [0 0 0] 1) [[0 0 0] [0 1 0]]) => (roughly 1))
+  ((sphere (->Vector3 0 0 0) 1) [(->Vector3 0 0 0) (->Vector3 0 1 0)]) => (roughly 1))
 
 (defn scene
   ([]
@@ -85,7 +85,7 @@
 (fact
   (render (scene)) => [black]
   (provided
-    (camera-rays) => [[[0 0 0] [1 0 0]]]))
+    (camera-rays) => [[(->Vector3 0 0 0) (->Vector3 1 0 0)]]))
 
 (defn rgb-to-int [rgb]
   (reduce +

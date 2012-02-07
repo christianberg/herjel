@@ -1,51 +1,51 @@
 (ns herjel.util.vector-math
   (:use midje.sweet))
 
-(defn roughlies [expected]
-  (fn [actual]
-    (every? identity (map #((roughly %1) %2) expected actual))))
+(defprotocol VectorMath
+  "3D vector mathematical functions."
+  (vec+ [v v2] "Add vectors.")
+  (vec- [v v2] "Subtract vectors.")
+  (scale [v scalar] "Multiply a vector by a scalar.")
+  (vecdot [v1 v2] "Vector dot product.")
+  (veclen [v] "Vector length.")
+  (norm [v] "Return a normalized vector (with unit length)."))
 
-(defn vec+ [& vs]
-  (apply map + vs))
+(defrecord Vector3 [#^double x  #^double y  #^double z]
+  VectorMath
+  (vec+ [this v2]
+    (Vector3. (+ x (:x v2)) (+ y (:y v2)) (+ z (:z v2))))
+  (vec- [this v2]
+    (Vector3. (- x (:x v2)) (- y (:y v2)) (- z (:z v2))))
+  (scale [this scalar]
+    (Vector3. (* x scalar) (* y scalar) (* z scalar)))
+  (vecdot [this v2]
+    (+ (* x (:x v2)) (* y (:y v2)) (* z (:z v2))))
+  (veclen [this]
+    (Math/sqrt (+ (* x x) (* y y) (* z z))))
+  (norm [this]
+    (scale this (/ (veclen this)))))
 
 (fact "vector addition"
-  (vec+ [1 2 3]) => [1 2 3]
-  (vec+ [1 2 3] [4 5 6]) => [5 7 9]
-  (vec+ [0 0 1] [0 1 0] [1 0 0]) => [1 1 1])
-
-(defn scale [scalar vector]
-  (map (partial * scalar) vector))
-
-(fact "scaling a vector"
-  (scale 2 [3 5 9]) => [6 10 18]
-  (scale -0.5 [0 20 -8.4]) => [0.0 -10.0 4.2])
-
-(defn vecdot [v1 v2]
-  (reduce + (map * v1 v2)))
-
-(fact "vector dot product"
-  (vecdot [1 0 0] [0 1 0]) => 0
-  (vecdot [1 0 0] [1 0 0]) => 1
-  (vecdot [1 2 3] [4 5 6]) => 32)
-
-(defn veclen [v]
-  (Math/sqrt (vecdot v v)))
-
-(fact "vector length"
-  (veclen [1 0 0]) => 1.0
-  (veclen [3 4 0]) => 5.0)
-
-(defn vec- [& vs]
-  (apply (partial map -) vs))
+  (vec+ (Vector3. 1 2 3) (Vector3. 4 5 6)) => (Vector3. 5 7 9)
+  (vec+ (Vector3. 0 0 1) (Vector3. 1 1 0)) => (Vector3. 1 1 1))
 
 (fact "vector difference"
-  (vec- [4 6 3] [2 9 1]) => [2 -3 2])
+  (vec- (Vector3. 4 6 3) (Vector3. 2 9 1)) => (Vector3. 2 -3 2))
 
-(defn norm [v]
-  (scale (/ (veclen v)) v))
+(fact "scaling a vector"
+  (scale (Vector3. 3 5 9) 2) => (Vector3. 6 10 18)
+  (scale (Vector3. 0 20 -8.4) -0.5) => (Vector3. 0.0 -10.0 4.2))
+
+(fact "vector dot product"
+  (vecdot (Vector3. 1 0 0) (Vector3. 0 1 0)) => 0.0
+  (vecdot (Vector3. 1 0 0) (Vector3. 1 0 0)) => 1.0
+  (vecdot (Vector3. 1 2 3) (Vector3. 4 5 6)) => 32.0)
+
+(fact "vector length"
+  (veclen (Vector3. 1 0 0)) => 1.0
+  (veclen (Vector3. 3 4 0)) => 5.0)
 
 (fact "normalize vector"
-  (norm [1.0 0.0 0.0]) => [1.0 0.0 0.0]
-  (norm [0 2 0]) => [0.0 1.0 0.0]
-  (norm [3 0 4]) => (roughlies [0.6 0.0 0.8]))
+  (norm (Vector3. 1.0 0.0 0.0)) => (Vector3. 1.0 0.0 0.0)
+  (norm (Vector3. 0 2 0)) => (Vector3. 0.0 1.0 0.0))
 
