@@ -42,30 +42,33 @@
                                                       [[0 0 0] [a b c]]]
     (count (camera-rays)) => (* 320 240)))
 
-(defn sphere [center radius]
-  (fn [[origin direction]]
-    (let [origin (vec- origin center)
-          A (vecdot direction direction)
-          B (* 2 (vecdot direction origin))
-          C (- (vecdot origin origin) (* radius radius))
-          x (- (* B B) (* 4 A C))]
-      (when (>= x 0)
-        (first
-         (filter
-          (partial < 0) [(/ (+ B (Math/sqrt x)) (* -2 A))
-                         (/ (- B (Math/sqrt x)) (* -2 A))]))))))
+(defn sphere
+  ([center radius]
+     (sphere center radius white))
+  ([center radius color]
+     (fn [[origin direction]]
+       (let [origin (vec- origin center)
+             A (vecdot direction direction)
+             B (* 2 (vecdot direction origin))
+             C (- (vecdot origin origin) (* radius radius))
+             x (- (* B B) (* 4 A C))]
+         (when (>= x 0)
+           [(first
+              (filter
+               (partial < 0) [(/ (+ B (Math/sqrt x)) (* -2 A))
+                              (/ (- B (Math/sqrt x)) (* -2 A))])) (constantly color)])))))
 
 (fact "ray doesn't hit sphere"
   ((sphere [0 2 0] 1) [[0 0 0] [1 0 0]]) => nil)
 
 (fact "ray hits sphere head on"
-  ((sphere [0 2 0] 1) [[0 0 0] [0 1 0]]) => (roughly 1))
+      (first ((sphere [0 2 0] 1) [[0 0 0] [0 1 0]])) => (roughly 1))
 
 (fact "ray grazes sphere"
-  ((sphere [0 2 1] 1) [[0 0 0] [0 1 0]]) => (roughly 2))
+      (first ((sphere [0 2 1] 1) [[0 0 0] [0 1 0]])) => (roughly 2))
 
 (fact "ray hits sphere from inside"
-  ((sphere [0 0 0] 1) [[0 0 0] [0 1 0]]) => (roughly 1))
+      (first ((sphere [0 0 0] 1) [[0 0 0] [0 1 0]])) => (roughly 1))
 
 (defn scene
   ([]
