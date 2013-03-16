@@ -70,11 +70,11 @@
 (fact "ray hits sphere from inside"
       (first ((sphere [0 0 0] 1) [[0 0 0] [0 1 0]])) => (roughly 1))
 
-(defn scene
-  ([]
-     (fn [ray] black))
-  ([object]
-     (fn [ray] (if (object ray) white black))))
+(defn scene [& objects]
+  (fn [ray]
+    (if-let [[distance color] (some identity (sort (map #(% ray) objects)))]
+      (color)
+      black)))
 
 (fact "an empty scene doesn't intersect a ray"
   ((scene) ...ray...) => black)
